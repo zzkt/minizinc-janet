@@ -1,0 +1,214 @@
+# -*- mode: org;  coding: utf-8; -*-
+#+title: minizinc-janet
+
+* Overview
+
+A Janet interface for the [[https://www.minizinc.org/][MiniZinc]] constraint solver, inspired by [[https://python.minizinc.dev/][MiniZinc Python]] and [[https://js.minizinc.dev/docs/stable/][MiniZinc JavaScript]]. MiniZinc is a modeling language for constraint satisfaction and optimization problems. It compiles to solver-specific formats (FlatZinc) and supports multiple backends.
+
+* Requirements
+
+- [[https://janet-lang.org/][Janet]] >= 1.41.2
+- [[https://www.minizinc.org/][MiniZinc]] >= 2.9.x (with at least one solver installed)
+
+* Quick Start
+
+#+BEGIN_SRC shell
+jpm install https://codeberg.org/zzkt/minizinc-janet
+#+END_SRC
+
+#+begin_src janet
+(import minizinc/model :as model)
+(import minizinc/solver :as solver)
+(import minizinc/instance :as instance)
+
+# Find and configure solver
+(def gecode (solver/lookup "gecode"))
+
+# Create model from file
+(def m (model/create "path/to/model.mzn"))
+
+# ...or create inline model
+(def m (model/create))
+(model/add-string m "var 1..10: x; constraint x > 5; solve satisfy;")
+
+# Create instance and set parameters
+(def inst (instance/create gecode m))
+(instance/set-param inst "n" 4 "m" 3)  # variadic key-value pairs
+
+# Solve
+(def res (instance/solve inst))
+(printf "Status: %v\n" (res :status))
+(printf "Solution: %v\n" (res :solution))
+#+end_src
+
+* Architecture
+
+The library follows the general structure of MiniZinc Python.
+
+|----------+-------------------------------------------------|
+| Module   | Description                                     |
+|----------+-------------------------------------------------|
+| =driver=   | Find and invoke the =minizinc= executable         |
+| =solver=   | Look up solvers by name, id, or tag             |
+| =model=    | Create models from files or inline code         |
+| =instance= | Bind a solver to a model, set params, and solve |
+| =result=   | Parse JSON/DZN output into structured results   |
+| =params=   | Serialize Janet values to DZN format            |
+| =utils=    | Utilites. List solvers, options, etc            |
+|----------+-------------------------------------------------|
+
+Available solver backends can be listed with =minizinc --solvers=
+
+|----------+------------------------+----------------------------------|
+| *Solver*   | *Type*                   |                                  |
+|----------+------------------------+----------------------------------|
+| [[https://github.com/chuffed-chuffed/chuffed][Chuffed]]  | Lazy clause generation | Fast for combinatorial problems  |
+| [[https://github.com/Gecode/gecode][Gecode]]   | Finite domain          | Mature, broad constraint support |
+| [[https://github.com/MiniZinc/libminizinc][OR-Tools]] | LP/MIP/CP              | Google's optimization suite      |
+| ...      |                        |                                  |
+|----------+------------------------+----------------------------------|
+
+** API Reference
+*** Driver
+
+- =(driver/find)= → path string or nil
+- =(driver/get-path)= → path string (auto-finds if needed)
+- =(driver/version)= → =(major minor patch)= tuple
+- =(driver/solvers-json)= → array of solver config tables
+
+*** Solver
+
+- =(solver/lookup tag)= → solver table (by name, id, or tag suffix)
+- =(solver/make name version id &opt executable)= → custom solver table
+- =(solver/solver-id solver)= → id string for CLI
+
+*** Model
+
+- =(model/create &opt files)= → model table
+- =(model/add-file model path)= → adds model file (formats: mzn, dzn, fzn, json)
+- =(model/add-string model code)= → adds inline MiniZinc code
+
+*** Instance
+
+- =(instance/create solver model)= → instance table
+- =(instance/set-param inst key val ...)= → set one or more parameters (as k,v pairs)
+- =(instance/add-string inst code)= → add extra code (for branching)
+- =(instance/solve inst &opt opts)= → result table (with any options)
+- =(instance/branch inst)= → create child instance for incremental solving
+
+*** Solver configuration
+
+Solver options can be passed as a table to =instance/solve=
+
+#+begin_src janet
+(instance/solve inst @{
+  :all-solutions true    # -a: return all solutions
+  :free-search true      # -f: free search mode
+  :time-limit 5000       # -t: time limit in ms
+  :nr-solutions 10       # -n: number of solutions
+  :processes 4           # -p: parallel processes
+  :random-seed 42        # -r: random seed
+})
+#+end_src
+
+*** Result
+
+- =(result/status-has-solution? status)= → boolean
+- Result table keys: =:status=, =:solution=, =:objective=, =:statistics=, =:raw=
+
+*** Utils
+
+- =(utils/list-solvers)= → array of ={:name :version :id}= tables
+- =(utils/solver-options)= → array of ={:flag :description :section}= tables
+- =(utils/print-solver-table)= → print installed solvers
+- =(utils/print-solver-options)= → print available options grouped by section
+
+** Examples
+
+The =examples/= directory contains both MiniZinc models (=.mzn=) and runnable Janet examples.
+
+*** Sudoku
+
+Solve puzzles by adding cell constraints via =instance/add-string=
+
+#+begin_src janet
+(def gecode (solver/lookup "gecode"))
+(def m (model/create "examples/sudoku.mzn"))
+(def inst (instance/create gecode m))
+
+(instance/add-string inst "
+  constraint x[1,1] = 5; constraint x[1,2] = 3;
+  constraint x[2,1] = 6; constraint x[2,3] = 1;
+")
+
+(def res (instance/solve inst))
+(def grid (get (res :solution) "x"))
+#+end_src
+
+*** Group arrangements
+
+Assign people to groups across several rounds. Minimizes repeated pairings.
+
+#+begin_src janet
+(import ./minizinc/solver :as solver)
+(import ./minizinc/model :as model)
+(import ./minizinc/instance :as instance)
+
+(def chuffed (solver/lookup "chuffed"))
+(def m (model/create "group-meeting-flex.mzn"))
+(def inst (instance/create chuffed m))
+
+# 9 people, 3 rounds with different group sizes
+(instance/set-param inst
+                    "v" 9
+                    "R" 3
+                    "max_tables" 3 "sizes"
+  @[@[3 3 3]   # Round 1: three groups of 3
+    @[4 5 0]   # Round 2: one group of 4, one of 5
+    @[9 0 0]]) # Round 3: everyone together
+
+(def res (instance/solve inst))
+(printf "Repeats: %v\n" (get (res :solution) "_objective"))
+#+end_src
+
+...or run the example file
+#+BEGIN_SRC shell
+janet group-meeting-flex.janet --demo kirkman
+#+END_SRC
+
+*** Utils
+
+List installed solvers and their options:
+
+#+begin_src janet
+(import minizinc/utils :as utils)
+
+(utils/print-solver-table)
+# Installed Solvers (12):
+#   Chuffed    0.13.2    org.chuffed.chuffed, cp, lcg, int
+#   Gecode     6.3.0     org.gecode.gecode, default solver, cp, int, float, set, restart
+#   ...
+
+(utils/print-solver-options)
+# Solver Options (80):
+#   General:
+#     --help, -h                         Print this help message.
+#     --time-limit <ms>                  Stop after <ms> milliseconds.
+#     -a, --all, --all-solns             Print all solutions for satisfaction problems.
+#     -p <n>, --parallel <n>             Use <n> threads during search.
+#     ...
+#+end_src
+
+** Webapp
+
+An example browser-based UI to the group meeting problem is included
+
+#+BEGIN_SRC shell
+janet web-interface.janet
+#+END_SRC
+
+* Further
+
+- The MiniZinc [[https://docs.minizinc.dev/en/stable/part_3_user_manual.html][User Manual]], [[https://docs.minizinc.dev/en/stable/part_4_reference.html][Reference Manual]] and [[https://docs.minizinc.dev/en/stable/part_2_tutorial.html][Tutorial]]
+- [[https://www.edx.org/learn/computer-programming/universite-catholique-de-louvain-constraint-programming][LouvainX: Constraint Programming]] online course
+- Some [[http://www.constraintsolving.com/][Constraint Solving]] resources
