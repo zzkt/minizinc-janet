@@ -62,9 +62,9 @@ Available solver backends can be listed with =minizinc --solvers=
 |----------+------------------------+----------------------------------|
 | *Solver*   | *Type*                   |                                  |
 |----------+------------------------+----------------------------------|
-| [[https://github.com/chuffed-chuffed/chuffed][Chuffed]]  | Lazy clause generation | Fast for combinatorial problems  |
+| [[https://github.com/chuffed/chuffed][Chuffed]]  | Lazy clause generation | Fast for combinatorial problems  |
 | [[https://github.com/Gecode/gecode][Gecode]]   | Finite domain          | Mature, broad constraint support |
-| [[https://github.com/MiniZinc/libminizinc][OR-Tools]] | LP/MIP/CP              | Google's optimization suite      |
+| [[https://github.com/google/or-tools][OR-Tools]] | LP/MIP/CP              | Google's optimization suite      |
 | ...      |                        |                                  |
 |----------+------------------------+----------------------------------|
 

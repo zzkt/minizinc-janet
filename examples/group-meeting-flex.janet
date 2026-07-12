@@ -282,8 +282,8 @@ Group sizes are comma separated, rounds are separated by pipes. Use 'x' to repea
   (def svg-width 1200)
   (def round-height 300)
   (def svg-height (+ 100 (* num-rounds round-height)))
-  (def colors @["#e8ddf0" "#dfe8f2" "#ddf2f1" "#def6eb" "#f4f9d8"
-                "#fef9e1" "#e8ddf0" "#dfe8f2" "#ddf2f1" "#def6eb"])
+  (def colors @["#e8e0f0" "#e0ecf0" "#e0f0ec" "#e0f0e0" "#f0f0e0"
+                "#f0ece0" "#e8e0f0" "#e0ecf0" "#e0f0ec" "#e0f0e0"])
 
   (buffer/push-string buf (string/format "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 %d %d\" style=\"width:100%%;height:auto\">\n" svg-width svg-height))
   (buffer/push-string buf "<style>\n")
