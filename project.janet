@@ -4,8 +4,8 @@
   :author "nik gaffney <nik@fo.am>"
   :url "https://codeberg.org/zzkt/minizinc-janet"
   :license "GPL-3.0-or-later"
-  :version "0.1.1"
-  :dependencies @["spork/json"])
+  :version "0.1.2"
+  :dependencies @["spork"]) # for spork/json
 
 (declare-source
   :prefix "minizinc"
