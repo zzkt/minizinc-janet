@@ -1,7 +1,7 @@
 # -*- mode: janet; -*-
 # minizinc: paths and config
 
-(import json)
+(import spork/json)
 
 (var *minizinc-path* nil)
 

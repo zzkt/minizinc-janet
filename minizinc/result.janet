@@ -1,7 +1,7 @@
 # -*- mode: janet; -*-
 # minizinc: results and output
 
-(import json)
+(import spork/json)
 
 (defn parse-status
   "Parse a MiniZinc status string to a keyword."
