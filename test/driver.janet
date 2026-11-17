@@ -1,10 +1,13 @@
+# -*- mode: janet; -*-
+# test/driver: can minizinc be found and run?
+
 (import spork/test)
 (import ../minizinc/driver :as driver)
 
 (test/start-suite 0)
 
 (test/assert-no-error "find driver"
-  (do (def p (driver/find))
+  (do (def p (driver/find-minizinc))
     (assert p "minizinc executable found")))
 
 (test/assert-no-error "get path"

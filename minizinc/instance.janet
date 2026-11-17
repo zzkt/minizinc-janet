@@ -1,10 +1,10 @@
 # -*- mode: janet; -*-
-# minizinc: instances
+# minizinc/instance: instantiations & solutions
 
 (import ./driver :as driver)
 (import ./solver :as solver)
 (import ./model :as model)
-(import ./params :as params)
+(import ./serializer :as params)
 (import ./result :as result)
 
 
@@ -17,12 +17,11 @@
     :extra-code @[]})
 
 (defn set-param
-  "Set parameter values on the instance. Takes key-value pairs.
-  (set-param inst :n 4 :m 3)"
-  [inst & kvs]
+  "Set parameters of the instance as key-value pairs."
+  [inst & _kvs]
   (var i 0)
-  (while (< i (length kvs))
-    (put (inst :params) (kvs i) (kvs (+ i 1)))
+  (while (< i (length _kvs))
+    (put (inst :params) (_kvs i) (_kvs (+ i 1)))
     (+= i 2))
   nil)
 
@@ -62,7 +61,7 @@
   "Build the minizinc command arguments."
   [inst opts]
   (def sol (inst :solver))
-  (def mdl (inst :model))
+  # (def mdl (inst :model))
   (def args @["--solver" (solver/solver-id sol)])
   (when (get opts :all-solutions false)
     (array/push args "-a"))
@@ -89,11 +88,11 @@
   (array/push args "--output-time")
   (array/push args "--output-objective")
   (array/push args "--output-output-item")
-  # return the arg array
+  # Return the arg array
   args)
 
 (defn solve
-  "Solve the instance. Returns a result table."
+  "Solve the instance. Return a result table."
   [inst &opt opts]
   (default opts {})
   (def dzn-path (write-temp-dzn inst))
@@ -118,7 +117,7 @@
         (spit inline-mzn code)
         (array/push args inline-mzn))))
   # Results
-  (def res (driver/run args))
+  (def res (driver/run-minizinc args))
   # Cleanup temp files (ignore errors if already deleted)
   (when dzn-path
     (try (os/rm dzn-path) ([_] nil)))
@@ -131,8 +130,7 @@
   (result/parse-output (res :stdout)))
 
 (defn branch
-  "Create a child instance for incremental solving.
-  Changes to the child do not affect the parent."
+  "Create a child instance for incremental solving."
   [inst]
   (def child (create (inst :solver) (inst :model)))
   (put child :params (table/clone (inst :params)))

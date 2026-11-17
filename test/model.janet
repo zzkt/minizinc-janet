@@ -1,3 +1,6 @@
+# -*- mode: janet; -*-
+# test/model: can models be loaded and created?
+
 (import spork/test)
 (import ../minizinc/model :as model)
 

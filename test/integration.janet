@@ -1,3 +1,6 @@
+# -*- mode: janet; -*-
+# test/integration: is minizinc integrated with janet?
+
 (import spork/test)
 
 (import ../minizinc/solver :as solver)

@@ -1,10 +1,11 @@
 # -*- mode: janet; -*-
-# utilities: solver and option listing
+# minizinc/utils: solver and option listing
 
 (import ./driver :as driver)
 
 (defn list-solvers
-  "List all installed solvers. Returns array of {:name :version :id :tags} tables."
+  "List all installed solvers.
+Returns array of {:name :version :id :tags} tables."
   []
   (def json-solvers (driver/solvers-json))
   (def solvers @[])
@@ -21,7 +22,8 @@
 
 
 (defn solver-options
-  "Get options for all solvers. Returns array of {:flag :description :solver} tables."
+  "List options for all solvers.
+Returns array of {:flag :description :solver} tables."
   []
   (def json-solvers (driver/solvers-json))
   (def options @[])

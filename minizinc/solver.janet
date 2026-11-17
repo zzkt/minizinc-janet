@@ -1,12 +1,11 @@
 # -*- mode: janet; -*-
-# minizinc: solvers
+# minizinc/solver: solving with solvers.
 
 (import ./driver :as driver)
 
-
 (defn lookup
-  "Look up a solver by tag, id, or name. Returns solver table.
-  Searches by: full id, id ending, name, then tags."
+  "Look up a solver by tag, id, or name.
+Returns solver table."
   [tag]
   (def solvers (driver/solvers-json))
   (var found nil)

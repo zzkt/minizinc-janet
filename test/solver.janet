@@ -1,3 +1,6 @@
+# -*- mode: janet; -*-
+# test/solver: solver(s)
+
 (import spork/test)
 (import ../minizinc/solver :as solver)
 

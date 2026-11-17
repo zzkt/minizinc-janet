@@ -1,10 +1,10 @@
 # -*- mode: janet; -*-
-# minizinc: models
+# minizinc/model: models, inline and file interface.
 
 (var add-file nil)
 
 (defn create
-  "Create a new empty MiniZinc model. Optionally from file paths."
+  "Create a new empty MiniZinc model, optionally from file paths."
   [&opt files]
   (def m @{:files @[] :code @""})
   (when files
